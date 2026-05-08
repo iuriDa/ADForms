@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Заявка на соревнования | ФРСРК</title>
+  <style>
+    :root{
+      --blue:#0b5fff; --dark:#101828; --muted:#667085; --bg:#f5f7fb; --card:#fff;
+      --line:#e4e7ec; --green:#12b76a; --red:#f04438;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--dark)}
+    header{background:linear-gradient(135deg,#062b7a,#0b5fff);color:#fff;padding:28px 18px}
+    .wrap{max-width:1100px;margin:0 auto}
+    .brand{font-weight:800;font-size:22px}
+    .hero h1{font-size:34px;margin:22px 0 8px}
+    .hero p{max-width:760px;opacity:.9;line-height:1.5}
+    main{padding:28px 18px 60px}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(16,24,40,.06)}
+    h2{margin:0 0 16px;font-size:22px}
+    h3{margin:18px 0 10px;font-size:17px}
+    label{font-size:13px;font-weight:700;color:#344054;display:block;margin:12px 0 6px}
+    input,select,textarea{width:100%;border:1px solid #d0d5dd;border-radius:12px;padding:12px 13px;font-size:15px;background:#fff}
+    textarea{min-height:86px;resize:vertical}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .athlete{border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0;background:#fcfcfd}
+    .discipline{border:1px dashed #b8c3d9;border-radius:14px;padding:12px;margin-top:10px;background:#fff}
+    .btn{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;font-size:15px}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-light{background:#eef4ff;color:#0b5fff}
+    .btn-danger{background:#fff1f3;color:#c01048}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .hint{font-size:13px;color:var(--muted);line-height:1.5}
+    .status{margin-top:12px;padding:12px;border-radius:12px;display:none}
+    .status.ok{display:block;background:#ecfdf3;color:#027a48}
+    .status.err{display:block;background:#fff1f3;color:#b42318}
+    .small{font-size:12px;color:var(--muted)}
+    .pill{display:inline-flex;background:#eef4ff;color:#0b5fff;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}
+    code{background:#f2f4f7;padding:2px 5px;border-radius:6px}
+    @media(max-width:900px){.grid,.row{grid-template-columns:1fr}.hero h1{font-size:28px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">ФРСРК</div>
+    <div class="hero">
+      <h1>Форма заявки на соревнования</h1>
+      <p>Заполните данные коллектива, участников и дисциплины. После отправки заявка автоматически попадёт в Google Sheets организатора.</p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap grid">
+    <section class="card">
+      <h2>Заявка коллектива</h2>
+
+      <form id="appForm">
+        <label>Мероприятие</label>
+        <select name="eventName" id="eventName" required></select>
+
+        <div class="row">
+          <div>
+            <label>Название коллектива / команды</label>
+            <input name="clubName" required placeholder="Например: Сборная Республики Крым">
+          </div>
+          <div>
+            <label>Город</label>
+            <input name="city" required placeholder="Например: Симферополь">
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Тренер</label>
+            <input name="coachName" required placeholder="ФИО тренера">
+          </div>
+          <div>
+            <label>Телефон / Telegram тренера</label>
+            <input name="coachContact" required placeholder="+7... / @username">
+          </div>
+        </div>
+
+        <label>Email для подтверждения</label>
+        <input type="email" name="email" placeholder="example@mail.ru">
+
+        <h3>Участники</h3>
+        <div id="athletes"></div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-light" onclick="addAthlete()">+ Добавить участника</button>
+          <button type="submit" class="btn btn-primary">Отправить заявку</button>
+        </div>
+
+        <div id="status" class="status"></div>
+      </form>
+    </section>
+
+    <aside class="card">
+      <h2>Как это работает</h2>
+      <p class="hint">
+        1. Организатор редактирует мероприятия, возрастные группы и дисциплины в Google Sheets.<br>
+        2. Сайт при загрузке получает эти настройки через Google Apps Script.<br>
+        3. После отправки заявки данные попадают на листы <b>Заявки</b>, <b>Участники</b> и <b>Выступления</b>.<br>
+        4. Из листа <b>Выступления</b> удобно собирать расписание: время, площадка, номер, ФИО, дисциплина.
+      </p>
+
+      <h3>Возрастная группа</h3>
+      <p class="hint">
+        Возраст считается по году проведения мероприятия: <code>год мероприятия - год рождения</code>.
+        Например, если событие в июне 2026, а спортсмену 15 исполнится в июле 2026, он всё равно попадает в категорию 15 лет.
+      </p>
+
+      <h3>Групповые дисциплины</h3>
+      <p class="hint">
+        В групповой дисциплине можно указать партнёров. Если партнёра ещё нет в заявке, он автоматически будет добавлен в таблицу как участник коллектива.
+      </p>
+
+      <p class="small">Перед публикацией замени в коде значение <code>SCRIPT_URL</code> на ссылку своего Google Apps Script Web App.</p>
+    </aside>
+  </div>
+</main>
+
+<script>
+  // 1) ВСТАВЬ СЮДА URL Google Apps Script Web App
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwO6sgtov2Yx6J_wejQ0-7KzCdKAe72nOaHNmle9JbAZ8-hpmIzno1tPhkJF3sT7XHq/exec';
+
+  let settings = {
+    events: [{name:'Кубок Республики Крым по спортивной скакалке', date:'2026-06-15'}],
+    disciplines: [
+      {name:'Вольные упражнения', type:'individual', min:1, max:1, duration:180},
+      {name:'Прыжки за 30с', type:'individual', min:1, max:1, duration:30},
+      {name:'Прыжки за 180с', type:'individual', min:1, max:1, duration:180},
+      {name:'Прыжки через две скакалки - 1 человек', type:'group', min:3, max:3, duration:180},
+      {name:'Прыжки через две скакалки - 2 человека', type:'group', min:4, max:4, duration:180},
+      {name:'Командные соревнования', type:'group', min:4, max:12, duration:300}
+    ],
+    ageGroups: [
+      {name:'Дети', from:7, to:10},
+      {name:'Юноши, девушки', from:11, to:14},
+      {name:'Юниоры, юниорки', from:15, to:17},
+      {name:'Мужчины, женщины', from:18, to:99}
+    ]
+  };
+
+  async function loadSettings(){
+    if(!SCRIPT_URL.includes('PASTE_YOUR')){
+      try{
+        const res = await fetch(SCRIPT_URL + '?action=settings');
+        const data = await res.json();
+        if(data.ok) settings = data.settings;
+      }catch(e){ console.warn('Настройки не загрузились, используются демо-настройки', e); }
+    }
+    renderEvents();
+    addAthlete();
+  }
+
+  function renderEvents(){
+    const select = document.getElementById('eventName');
+    select.innerHTML = settings.events.map(e => `<option value="${escapeHtml(e.name)}" data-date="${escapeHtml(e.date)}">${escapeHtml(e.name)} — ${escapeHtml(e.date)}</option>`).join('');
+  }
+
+  function disciplineOptions(){
+    return settings.disciplines.map(d => `<option value="${escapeHtml(d.name)}">${escapeHtml(d.name)} (${d.type === 'group' ? 'групповая' : 'личная'})</option>`).join('');
+  }
+
+  function addAthlete(){
+    const id = Date.now() + '_' + Math.random().toString(16).slice(2);
+    const box = document.createElement('div');
+    box.className = 'athlete';
+    box.dataset.athleteId = id;
+    box.innerHTML = `
+      <div class="row">
+        <div>
+          <label>ФИО участника</label>
+          <input class="athlete-name" required placeholder="Фамилия Имя Отчество">
+        </div>
+        <div>
+          <label>Дата рождения</label>
+          <input type="date" class="athlete-birth" required onchange="updateAgeGroup(this)">
+          <div class="small">Категория: <span class="pill age-group">—</span></div>
+        </div>
+      </div>
+      <div class="disciplines"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-light" onclick="addDiscipline(this)">+ Дисциплина</button>
+        <button type="button" class="btn btn-danger" onclick="this.closest('.athlete').remove()">Удалить участника</button>
+      </div>
+    `;
+    document.getElementById('athletes').appendChild(box);
+    addDiscipline(box.querySelector('.btn-light'));
+  }
+
+  function addDiscipline(btn){
+    const athlete = btn.closest('.athlete');
+    const d = document.createElement('div');
+    d.className = 'discipline';
+    d.innerHTML = `
+      <label>Дисциплина</label>
+      <select class="discipline-name" onchange="togglePartners(this)" required>${disciplineOptions()}</select>
+      <div class="partners-box" style="display:none">
+        <label>Партнёры / состав группы</label>
+        <textarea class="partners" placeholder="Каждого спортсмена с новой строки. Например:&#10;Иванов Иван&#10;Петров Пётр"></textarea>
+        <div class="small">Для групповой дисциплины укажите остальных спортсменов состава. Основной участник добавляется автоматически.</div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-danger" onclick="this.closest('.discipline').remove()">Удалить дисциплину</button>
+      </div>
+    `;
+    athlete.querySelector('.disciplines').appendChild(d);
+    togglePartners(d.querySelector('.discipline-name'));
+  }
+
+  function togglePartners(sel){
+    const disc = settings.disciplines.find(x => x.name === sel.value);
+    const box = sel.closest('.discipline').querySelector('.partners-box');
+    box.style.display = disc && disc.type === 'group' ? 'block' : 'none';
+  }
+
+  function updateAgeGroup(input){
+    const athlete = input.closest('.athlete');
+    const eventDate = document.getElementById('eventName').selectedOptions[0]?.dataset.date || new Date().toISOString().slice(0,10);
+    const age = new Date(eventDate).getFullYear() - new Date(input.value).getFullYear();
+    const group = settings.ageGroups.find(g => age >= Number(g.from) && age <= Number(g.to));
+    athlete.querySelector('.age-group').textContent = group ? `${group.name} (${age})` : `Не найдена (${age})`;
+  }
+
+  document.getElementById('appForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('status');
+    status.className = 'status';
+    status.textContent = '';
+
+    if(SCRIPT_URL.includes('PASTE_YOUR')){
+      status.className = 'status err';
+      status.textContent = 'Сначала вставьте URL Google Apps Script в переменную SCRIPT_URL.';
+      return;
+    }
+
+    const fd = new FormData(e.target);
+    const athletes = [...document.querySelectorAll('.athlete')].map(a => ({
+      name: a.querySelector('.athlete-name').value.trim(),
+      birthDate: a.querySelector('.athlete-birth').value,
+      ageGroup: a.querySelector('.age-group').textContent,
+      disciplines: [...a.querySelectorAll('.discipline')].map(d => ({
+        name: d.querySelector('.discipline-name').value,
+        partners: (d.querySelector('.partners')?.value || '').split('\n').map(x => x.trim()).filter(Boolean)
+      }))
+    }));
+
+    const payload = {
+      eventName: fd.get('eventName'),
+      clubName: fd.get('clubName'),
+      city: fd.get('city'),
+      coachName: fd.get('coachName'),
+      coachContact: fd.get('coachContact'),
+      email: fd.get('email'),
+      athletes
+    };
+
+    try{
+      const res = await fetch(SCRIPT_URL, {
+        method:'POST',
+        mode:'cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error || 'Ошибка отправки');
+
+      status.className = 'status ok';
+      status.textContent = `Заявка отправлена. Номер заявки: ${data.applicationId}`;
+      e.target.reset();
+      document.getElementById('athletes').innerHTML = '';
+      addAthlete();
+    }catch(err){
+      status.className = 'status err';
+      status.textContent = 'Не удалось отправить заявку: ' + err.message;
+    }
+  });
+
+  function escapeHtml(str){
+    return String(str ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
+  }
+
+  loadSettings();
+</script>
+</body>
+</html>
