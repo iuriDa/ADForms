@@ -118,8 +118,6 @@
       <p class="hint">
         В групповой дисциплине можно указать партнёров. Если партнёра ещё нет в заявке, он автоматически будет добавлен в таблицу как участник коллектива.
       </p>
-
-      <p class="small">Перед публикацией замени в коде значение <code>SCRIPT_URL</code> на ссылку своего Google Apps Script Web App.</p>
     </aside>
   </div>
 </main>
@@ -131,18 +129,18 @@
   let settings = {
     events: [{name:'Кубок Республики Крым по спортивной скакалке', date:'2026-06-15'}],
     disciplines: [
-      {name:'Вольные упражнения', type:'individual', min:1, max:1, duration:180},
+      {name:'Вольные упражнения группа', type:'group', min:1, max:1, duration:75},
       {name:'Прыжки за 30с', type:'individual', min:1, max:1, duration:30},
-      {name:'Прыжки за 180с', type:'individual', min:1, max:1, duration:180},
-      {name:'Прыжки через две скакалки - 1 человек', type:'group', min:3, max:3, duration:180},
-      {name:'Прыжки через две скакалки - 2 человека', type:'group', min:4, max:4, duration:180},
-      {name:'Командные соревнования', type:'group', min:4, max:12, duration:300}
+      {name:'Прыжки через две скакалки - 1 человек', type:'group', min:3, max:3, duration:75},
+      {name:'Прыжки через две скакалки - 2 человека', type:'group', min:4, max:4, duration:75},
+      {name:'Командные соревнования', type:'group', min:4, max:12, duration:150}
     ],
     ageGroups: [
       {name:'Дети', from:7, to:10},
       {name:'Юноши, девушки', from:11, to:14},
       {name:'Юниоры, юниорки', from:15, to:17},
-      {name:'Мужчины, женщины', from:18, to:99}
+      {name:'Мужчины, женщины', from:18, to:29}
+      {name:'Мужчины, женщины 30+', from:30, to:99}
     ]
   };
 
